@@ -86,7 +86,7 @@ def scrape_and_save():
 
     # Write the updated data back to 'user_queries.json'
     try:
-        with open("user_queries.json", "w") as f:
+        with open("scraped_data/{query}.json.json", "w") as f:
             json.dump(existing_data, f, indent=4)
         print("Scraping completed and saved.")
     except Exception as e:
