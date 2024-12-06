@@ -5,7 +5,7 @@ from input_data.data_writer import DataWriter
 import json
 import os
 from typing import List
-
+import time
 # Initialize FastAPI app
 app = FastAPI()
 
@@ -33,16 +33,16 @@ async def scrape_query(background_tasks: BackgroundTasks):
 # Background task to handle scraping and saving
  # Assuming you have a Product class defined
 
+
 def scrape_and_save():
     # Initialize scraper
     scraper = AmazonScraper()
 
     # Load the queries from 'user_queries.json'
-    with open("scraper/user_queries.json", "r") as f:
-            data = json.load(f)
-            print(data)
     try:
-            queries = data
+        with open("scraper/user_queries.json", "r") as f:
+            data = json.load(f)
+        queries = data
     except FileNotFoundError:
         queries = []
         print("user_queries.json not found. No queries to scrape.")
@@ -59,7 +59,7 @@ def scrape_and_save():
         
         try:
             # Scrape 5 pages for each query
-            all_products = scraper.scrape_query(query, num_pages=20)
+            all_products = scraper.scrape_query(query, num_pages=5)
             
             # Convert Product objects to dictionaries
             product_data = [product.__dict__ for product in all_products]
@@ -68,29 +68,39 @@ def scrape_and_save():
             all_scraped_data[query] = product_data
 
             # Optional: Add a random delay to avoid triggering anti-scraping mechanisms
-            # time.sleep(random.uniform(1, 3))
+            time.sleep(random.uniform(1, 3))
 
         except Exception as e:
             print(f"Error scraping query {query}: {e}")
             continue
 
-    # Load existing data from the file if it exists
-    try:
-        with open("user_queries.json", "r") as f:
-            existing_data = json.load(f)
-    except FileNotFoundError:
-        existing_data = {}
+    # Ensure the scraped_data directory exists
+    os.makedirs("scraped_data", exist_ok=True)
 
-    # Add the newly scraped data to the existing data
-    existing_data.update(all_scraped_data)
+    # Save the scraped data for each query into separate files
+    for query, product_data in all_scraped_data.items():
+        file_path = f"scraped_data/{query}.json"
+        
+        try:
+            # Load existing data from the file if it exists
+            if os.path.exists(file_path):
+                with open(file_path, "r") as f:
+                    existing_data = json.load(f)
+            else:
+                existing_data = {}
 
-    # Write the updated data back to 'user_queries.json'
-    try:
-        with open("scraped_data/{query}.json.json", "w") as f:
-            json.dump(existing_data, f, indent=4)
-        print("Scraping completed and saved.")
-    except Exception as e:
-        print(f"Error saving data: {e}")
+            # Update the existing data with newly scraped data
+            existing_data.update({query: product_data})
+
+            # Write the updated data back to the file
+            with open(file_path, "w") as f:
+                json.dump(existing_data, f, indent=4)
+            print(f"Scraping for query '{query}' completed and saved.")
+        
+        except Exception as e:
+            print(f"Error saving data for query {query}: {e}")
+
+
 
 
 
