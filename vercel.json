@@ -1,14 +1,14 @@
 {
     "builds": [
-        {
-            "src": "api/main.py",
-            "use": "@vercel/python"
-        }
+      {
+        "src": "main.py",
+        "use": "@vercel/python"
+      }
     ],
     "routes": [
-        {
-            "src": "/(.*)",
-            "dest": "python -m uvicorn app.main:app --reload"
-        }
+      {
+        "src": "/(.*)",
+        "dest": "app/main.py"
+      }
     ]
-}
+  }
