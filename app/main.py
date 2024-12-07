@@ -7,10 +7,35 @@ import os
 from typing import List
 import time
 from fastapi.responses import JSONResponse
+from starlette.middleware.cors import CORSMiddleware
+
+
+
 app = FastAPI()
 scraper = AmazonScraper()
 
 app = FastAPI()
+
+
+origins = [
+    "http://localhost:3000",  # Frontend URL (React or other frontend frameworks)
+    "https://scrapper-amazon.vercel.app",  # Your Vercel hosted frontend (if applicable)
+    "*",  # Wildcard to allow all origins (use with caution in production)
+]
+
+# Add CORSMiddleware to FastAPI
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,  # Allows requests from the listed origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all HTTP methods (GET, POST, etc.)
+    allow_headers=["*"],  # Allows all headers
+)
+
+
+
+
+
 @app.get("/")
 def read_root():
     return {"message": "Hello, Maaz Amjad Here!"}
@@ -45,7 +70,7 @@ def scrape_and_save():
             all_products = scraper.scrape_query(query, num_pages=5)
             product_data = [product.__dict__ for product in all_products]
             all_scraped_data[query] = product_data
-            time.sleep(random.uniform(1, 3))
+            # time.sleep(random.uniform(1, 3))
 
         except Exception as e:
             print(f"Error scraping query {query}: {e}")
@@ -74,9 +99,9 @@ def scrape_and_save():
 
 
 
-@app.get("/data/{query}", response_model=List[dict])
+@app.get("/data/{query}")
 async def get_scraped_data(query: str):
- 
+    print(query)
     file_path = f"scraped_data/{query}.json"
     if os.path.exists(file_path):
         with open(file_path, 'r', encoding='utf-8') as f:
